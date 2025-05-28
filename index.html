@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نموذج عقد إلكتروني مع ملاحق</title>
+    <title>نموذج عقد إلكتروني مع جداول ملاحق</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,17 +14,17 @@
         canvas {
             touch-action: none; 
         }
-        textarea::-webkit-scrollbar {
+        textarea::-webkit-scrollbar, .table-container::-webkit-scrollbar {
             width: 8px;
         }
-        textarea::-webkit-scrollbar-thumb {
+        textarea::-webkit-scrollbar-thumb, .table-container::-webkit-scrollbar-thumb {
             background-color: #cbd5e1; 
             border-radius: 4px;
         }
         .prose { 
             line-height: 1.75;
         }
-        .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { /* Added h5, h6 */
+        .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
             font-weight: 600;
             margin-bottom: 0.5em;
             margin-top: 1em;
@@ -32,14 +32,62 @@
         .prose p, .prose li {
             margin-bottom: 1em;
         }
-        .annex-details { /* Styling for annex details in the final contract view */
+        .annex-details {
             margin-top: 1.5em;
             padding-top: 1em;
-            border-top: 1px solid #e2e8f0; /* cool-gray-200 */
+            border-top: 1px solid #e2e8f0;
         }
         .annex-details h5 {
             font-size: 1.1em;
-            color: #374151; /* cool-gray-700 */
+            color: #374151;
+        }
+        .editable-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5em;
+        }
+        .editable-table th, .editable-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem;
+            text-align: right;
+        }
+        .editable-table th {
+            background-color: #f9fafb; /* cool-gray-50 */
+        }
+        .editable-table td[contenteditable="true"] {
+            background-color: #eff6ff; /* blue-50 for editable cells */
+            cursor: text;
+        }
+        .delete-row-btn {
+            background-color: #fee2e2; /* red-100 */
+            color: #b91c1c; /* red-700 */
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .delete-row-btn:hover {
+            background-color: #fecaca; /* red-200 */
+        }
+        .add-row-btn {
+            background-color: #dbeafe; /* blue-100 */
+            color: #1d4ed8; /* blue-700 */
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+        .add-row-btn:hover {
+            background-color: #bfdbfe; /* blue-200 */
+        }
+        .table-container {
+            max-height: 400px; /* Limit height and make it scrollable */
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
         }
     </style>
 </head>
@@ -119,10 +167,29 @@
                     <label for="annex1Title" class="block text-sm font-medium text-gray-700">عنوان ملحق 1:</label>
                     <input type="text" id="annex1Title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" value="ملحق (1): أسعار الخدمات الطبية">
                     
-                    <label for="annex1Description" class="mt-3 block text-sm font-medium text-gray-700">وصف/محتوى ملحق 1 (سيظهر في العقد):</label>
-                    <textarea id="annex1Description" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" placeholder="أدخل هنا وصفاً موجزاً أو النقاط الرئيسية لملحق 1. التفاصيل الكاملة تكون في الملف المنفصل. مثال: يشمل هذا الملحق قائمة أسعار عمليات النساء والولادة، عمليات الأنف والأذن والحنجرة، عمليات الجراحة العامة، وغيرها كما هو مفصل في المستند المرفق.">يشمل هذا الملحق قائمة أسعار عمليات النساء والولادة، عمليات الأنف والأذن والحنجرة، عمليات الجراحة العامة، عمليات العيون، وحدة غسيل الكلى وتفتيت الحصوات، وحدة المناظير والإيكو، والتخدير العام لعلاجات الأسنان وفحص العيون، بالإضافة إلى الملاحظات والشروط المتعلقة بالأسعار والإقامة. التفاصيل الكاملة موجودة في المستند المنفصل المسمى 'DSH AND SAFA MAKKAH CLINICS MAY2025 CONTRACT - Annex 1.xlsx' (أو ما شابه).</textarea>
+                    <label for="annex1GeneralDescription" class="mt-3 block text-sm font-medium text-gray-700">ملاحظات عامة على ملحق 1 (اختياري):</label>
+                    <textarea id="annex1GeneralDescription" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" placeholder="أدخل هنا أي ملاحظات عامة تسبق جدول الأسعار.">يشمل هذا الملحق قائمة أسعار الخدمات الطبية الرئيسية. التفاصيل الكاملة موجودة في المستند المنفصل المسمى 'DSH AND SAFA MAKKAH CLINICS MAY2025 CONTRACT - Annex 1.xlsx' (أو ما شابه). الأسعار قابلة للمراجعة وفقاً للاتفاق.</textarea>
                     
-                    <label for="annex1File" class="mt-3 block text-sm font-medium text-gray-700">اسم ملف ملحق 1 (اختياري - للعرض فقط):</label>
+                    <h4 class="text-md font-semibold text-gray-600 mt-4 mb-2">جدول أسعار ملحق 1 (قابل للتعديل):</h4>
+                    <div class="table-container">
+                        <table id="annex1PriceTable" class="editable-table">
+                            <thead>
+                                <tr>
+                                    <th>م</th>
+                                    <th>نوع العملية/الخدمة</th>
+                                    <th>السعر (ريال)</th>
+                                    <th>مدة الإقامة</th>
+                                    <th>ملاحظات</th>
+                                    <th>إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="annex1PriceTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                    <button id="addAnnex1RowBtn" class="add-row-btn">إضافة بند/خدمة لملحق 1</button>
+                    
+                    <label for="annex1File" class="mt-4 block text-sm font-medium text-gray-700">اسم ملف ملحق 1 (اختياري - للعرض فقط):</label>
                     <input type="file" id="annex1File" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                     <p id="annex1FileNameDisplay" class="mt-1 text-xs text-gray-500"></p>
                 </div>
@@ -170,7 +237,7 @@
 
             <div class="mt-8">
                 <h3 class="text-xl font-semibold text-gray-700 mb-4">إضافة التوقيعات والأختام:</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">توقيع الطرف الأول (<span id="partyANameDisplaySig" class="font-bold"></span>):</label>
                         <canvas id="signaturePartyA" class="border border-gray-400 rounded-lg w-full h-40 bg-white shadow-sm"></canvas>
@@ -217,12 +284,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const hijriDateInput = document.getElementById('hijriDate');
     const contractTextInput = document.getElementById('contractText');
     
-    // Annexes Input Elements
+    // Annex 1 Input Elements
     const annex1TitleInput = document.getElementById('annex1Title');
-    const annex1DescriptionTextarea = document.getElementById('annex1Description');
+    const annex1GeneralDescriptionTextarea = document.getElementById('annex1GeneralDescription');
+    const annex1PriceTableBody = document.getElementById('annex1PriceTableBody');
+    const addAnnex1RowBtn = document.getElementById('addAnnex1RowBtn');
     const annex1FileInput = document.getElementById('annex1File');
     const annex1FileNameDisplay = document.getElementById('annex1FileNameDisplay');
     
+    // Annex 2 Input Elements
     const annex2TitleInput = document.getElementById('annex2Title');
     const annex2DescriptionTextarea = document.getElementById('annex2Description');
     const annex2FileInput = document.getElementById('annex2File');
@@ -232,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Output Elements
     const contractTextOutput = document.getElementById('contractTextOutput');
-    const annexesOutput = document.getElementById('annexesOutput'); // For displaying annex details
+    const annexesOutput = document.getElementById('annexesOutput');
     const partyANameDisplaySig = document.getElementById('partyANameDisplaySig');
     const partyBNameDisplaySig = document.getElementById('partyBNameDisplaySig');
     const partyANameDisplayFinal = document.getElementById('partyANameDisplayFinal');
@@ -256,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contractDateInput.value = new Date().toISOString().split('T')[0];
     }
 
-    // --- Event Listeners for Annex File Inputs ---
+    // --- Annex File Input Listeners ---
     annex1FileInput.addEventListener('change', () => {
         annex1FileNameDisplay.textContent = annex1FileInput.files.length > 0 ? `الملف المختار: ${annex1FileInput.files[0].name}` : '';
     });
@@ -264,10 +334,40 @@ document.addEventListener('DOMContentLoaded', () => {
         annex2FileNameDisplay.textContent = annex2FileInput.files.length > 0 ? `الملف المختار: ${annex2FileInput.files[0].name}` : '';
     });
 
+    // --- Editable Table for Annex 1 ---
+    let annex1RowCount = 0;
+    function addAnnex1PriceRow(service = "", price = "", duration = "", notes = "") {
+        annex1RowCount++;
+        const row = annex1PriceTableBody.insertRow();
+        row.innerHTML = `
+            <td contenteditable="true">${annex1RowCount}</td>
+            <td contenteditable="true">${service}</td>
+            <td contenteditable="true" style="direction: ltr; text-align: right;">${price}</td>
+            <td contenteditable="true">${duration}</td>
+            <td contenteditable="true">${notes}</td>
+            <td><button class="delete-row-btn" onclick="deleteTableRow(this)">حذف</button></td>
+        `;
+    }
+    addAnnex1RowBtn.addEventListener('click', () => addAnnex1PriceRow());
+    
+    // Function to delete table row (globally accessible for inline onclick)
+    window.deleteTableRow = function(button) {
+        const row = button.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+        // Optional: re-number rows if needed
+    }
+
+    // Add some initial rows to Annex 1 table for demonstration
+    addAnnex1PriceRow("ولادة طبيعية بشق أو بدون شق عجان", "1600", "يوم واحد", "");
+    addAnnex1PriceRow("ولادة قيصرية للمرة الأولى والثانية", "4200", "ثلاثة أيام", "");
+    addAnnex1PriceRow("استئصال اللوزتين مع أو بدون لحميات (صغار)", "1700", "يوم واحد", "");
+
+
     // --- Signature Pad Setup ---
     function setupSignaturePad(canvasId, clearButtonId, displayImgElement, partyName) {
         const canvas = document.getElementById(canvasId);
         const clearButton = document.getElementById(clearButtonId);
+        // ... (rest of signature pad logic - unchanged) ...
         const displayImg = displayImgElement; 
         const ctx = canvas.getContext('2d');
         let drawing = false;
@@ -393,13 +493,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate Annexes Details
         let annexesHTML = '';
         const annex1Title = annex1TitleInput.value;
-        const annex1Desc = annex1DescriptionTextarea.value.replace(/\n/g, '<br>');
+        const annex1GeneralDesc = annex1GeneralDescriptionTextarea.value.replace(/\n/g, '<br>');
         const annex1File = annex1FileInput.files.length > 0 ? annex1FileInput.files[0].name : '';
         
-        if (annex1Title || annex1Desc) {
-            annexesHTML += `<h5>${annex1Title || 'ملحق 1'}:</h5>`;
-            if (annex1Desc) annexesHTML += `<p>${annex1Desc}</p>`;
-            if (annex1File) annexesHTML += `<p><i>(الملف المرفق المشار إليه: ${annex1File})</i></p>`;
+        // Capture Annex 1 Table HTML
+        const annex1TableElement = document.getElementById('annex1PriceTable');
+        let annex1TableHTML = '';
+        if (annex1TableElement && annex1PriceTableBody.rows.length > 0) {
+            // Clone the table to modify it for display (e.g., remove delete buttons for PDF)
+            const tableClone = annex1TableElement.cloneNode(true);
+            // Remove the last column (actions/delete button) from the clone for cleaner PDF output
+            const rows = tableClone.rows;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].cells.length > 5) { // Ensure there is a 6th cell (actions)
+                    rows[i].deleteCell(5); 
+                }
+            }
+            annex1TableHTML = `<div class="table-container" style="max-height: none; overflow-y: visible;">${tableClone.outerHTML}</div>`; // Remove scroll for PDF
+        }
+
+        if (annex1Title) {
+            annexesHTML += `<h5>${annex1Title}:</h5>`;
+            if (annex1GeneralDesc) annexesHTML += `<p>${annex1GeneralDesc}</p>`;
+            annexesHTML += annex1TableHTML; // Add the table HTML
+            if (annex1File) annexesHTML += `<p style="margin-top: 0.5em;"><i>(الملف المرفق المشار إليه: ${annex1File})</i></p>`;
         }
 
         const annex2Title = annex2TitleInput.value;
@@ -407,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const annex2File = annex2FileInput.files.length > 0 ? annex2FileInput.files[0].name : '';
 
         if (annex2Title || annex2Desc) {
-            annexesHTML += `<h5 style="margin-top:1em;">${annex2Title || 'ملحق 2'}:</h5>`;
+            annexesHTML += `<h5 style="margin-top:1.5em;">${annex2Title || 'ملحق 2'}:</h5>`;
             if (annex2Desc) annexesHTML += `<p>${annex2Desc}</p>`;
             if (annex2File) annexesHTML += `<p><i>(الملف المرفق المشار إليه: ${annex2File})</i></p>`;
         }
@@ -433,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Seal Upload Logic ---
     function setupSealUpload(uploadInputElement, previewImgElement, finalDisplayImgElement, placeholderText) {
+        // ... (rest of seal upload logic - unchanged) ...
         uploadInputElement.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -455,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Download PDF Logic ---
     downloadPdfButton.addEventListener('click', () => {
+        // ... (rest of PDF download logic - largely unchanged, but ensure table styles are captured) ...
         pdfStatus.textContent = 'جاري إنشاء ملف PDF، الرجاء الانتظار...';
         downloadPdfButton.disabled = true;
         const elementToCapture = document.getElementById('finalContractArea');
@@ -464,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (img.complete && img.naturalHeight !== 0) return Promise.resolve(); 
             return new Promise((resolve) => { 
                 img.onload = resolve; 
-                img.onerror = () => { resolve(); }; // Resolve even if an image fails to load
+                img.onerror = () => { resolve(); }; 
             });
         });
 
@@ -472,10 +591,14 @@ document.addEventListener('DOMContentLoaded', () => {
             html2canvas(elementToCapture, {
                 scale: 2.5, useCORS: true, logging: false, backgroundColor: '#ffffff',
                 onclone: (documentClone) => {
-                    // Ensure cloned elements for annexes are visible and styled for PDF
                     const clonedAnnexesOutput = documentClone.getElementById('annexesOutput');
                     if (clonedAnnexesOutput) {
-                        clonedAnnexesOutput.style.display = 'block'; // Ensure it's visible
+                        clonedAnnexesOutput.style.display = 'block'; 
+                        const tables = clonedAnnexesOutput.getElementsByTagName('table');
+                        for (let table of tables) {
+                            table.style.width = '100%'; // Ensure table width is good for PDF
+                            // Could add more specific styling for PDF tables here if needed
+                        }
                     }
                 }
             }).then(canvas => {
